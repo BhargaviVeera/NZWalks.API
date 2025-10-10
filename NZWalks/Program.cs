@@ -48,11 +48,14 @@ builder.Services.AddSwaggerGen(c =>
 
 // DbContexts
 builder.Services.AddDbContext<NZWalksDbContext>(opts =>
-    opts.UseSqlServer(builder.Configuration.GetConnectionString("NZWalksConnectionString")));
+    opts.UseSqlServer(builder.Configuration.GetConnectionString("NZWalksConnection")));
+
 builder.Services.AddDbContext<NZWalksAuthDbContext>(opts =>
-    opts.UseSqlServer(builder.Configuration.GetConnectionString("NZWalksAuthConnection")));
+    opts.UseSqlServer(builder.Configuration.GetConnectionString("NZWalksAuthConnectionString")));
+
 
 // Repositories & AutoMapper
+builder.Services.AddScoped<IDifficultyRepository, SQLDifficultyRepository>();
 builder.Services.AddScoped<IRegionRepository, SQLRegionRepository>();
 builder.Services.AddScoped<IWalkRepository, SQLWalkRepository>();
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();

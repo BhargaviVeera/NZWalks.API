@@ -16,15 +16,11 @@ namespace NZWalks.Repositories
             this.dbContext = dbContext;
         }
 
-        public async Task<IEnumerable<Difficulty>> GetAllAsync()  // ✅ return type matches interface
-        {
-            return await dbContext.Difficulties.ToListAsync();
-        }
+        public async Task<IEnumerable<Difficulty>> GetAllAsync() =>
+            await dbContext.Difficulties.ToListAsync();
 
-        public async Task<Difficulty?> GetByIdAsync(Guid id)
-        {
-            return await dbContext.Difficulties.FirstOrDefaultAsync(x => x.Id == id);
-        }
+        public async Task<Difficulty?> GetByIdAsync(Guid id) =>
+            await dbContext.Difficulties.FirstOrDefaultAsync(d => d.Id == id);
 
         public async Task<Difficulty> CreateAsync(Difficulty difficulty)
         {
@@ -35,20 +31,17 @@ namespace NZWalks.Repositories
 
         public async Task<Difficulty?> UpdateAsync(Guid id, Difficulty difficulty)
         {
-            var existing = await dbContext.Difficulties.FirstOrDefaultAsync(x => x.Id == id);
-
+            var existing = await dbContext.Difficulties.FirstOrDefaultAsync(d => d.Id == id);
             if (existing == null) return null;
 
             existing.Name = difficulty.Name;
-
             await dbContext.SaveChangesAsync();
             return existing;
         }
 
         public async Task<Difficulty?> DeleteAsync(Guid id)
         {
-            var existing = await dbContext.Difficulties.FirstOrDefaultAsync(x => x.Id == id);
-
+            var existing = await dbContext.Difficulties.FirstOrDefaultAsync(d => d.Id == id);
             if (existing == null) return null;
 
             dbContext.Difficulties.Remove(existing);
@@ -56,4 +49,5 @@ namespace NZWalks.Repositories
             return existing;
         }
     }
+
 }

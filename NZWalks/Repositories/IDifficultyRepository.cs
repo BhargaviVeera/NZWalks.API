@@ -7,7 +7,7 @@ namespace NZWalks.Repositories
 {
     public interface IDifficultyRepository
     {
-        Task<IEnumerable<Difficulty>> GetAllAsync();  // ✅ use IEnumerable
+        Task<IEnumerable<Difficulty>> GetAllAsync();
         Task<Difficulty?> GetByIdAsync(Guid id);
         Task<Difficulty> CreateAsync(Difficulty difficulty);
         Task<Difficulty?> UpdateAsync(Guid id, Difficulty difficulty);

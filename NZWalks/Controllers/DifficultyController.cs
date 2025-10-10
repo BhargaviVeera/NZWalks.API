@@ -2,19 +2,28 @@
 using Microsoft.AspNetCore.Mvc;
 using NZWalks.Models.Domain;
 using NZWalks.Models.DTO;
+using NZWalks.Repositories; 
+
 
 namespace NZWalks.Controllers
 {
-    [Authorize] // 🔐 all endpoints in this controller require authentication
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class DifficultyController : ControllerBase
     {
-        private static readonly List<Difficulty> difficulties = new List<Difficulty>();
+        private readonly IDifficultyRepository difficultyRepository;
+
+        public DifficultyController(IDifficultyRepository difficultyRepository)
+        {
+            this.difficultyRepository = difficultyRepository;
+        }
 
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
+            var difficulties = await difficultyRepository.GetAllAsync();
+
             var dtoList = difficulties.Select(d => new DifficultyDTO
             {
                 Id = d.Id,
@@ -25,7 +34,7 @@ namespace NZWalks.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create([FromBody] AddDifficultyDTO dto)
+        public async Task<IActionResult> Create([FromBody] AddDifficultyDTO dto)
         {
             if (dto == null) return BadRequest();
 
@@ -35,7 +44,7 @@ namespace NZWalks.Controllers
                 Name = dto.Name
             };
 
-            difficulties.Add(difficulty);
+            await difficultyRepository.CreateAsync(difficulty);
 
             var responseDto = new DifficultyDTO
             {
@@ -46,25 +55,35 @@ namespace NZWalks.Controllers
             return CreatedAtAction(nameof(GetAll), new { id = difficulty.Id }, responseDto);
         }
 
-        [HttpPut("{id}")]
-        public IActionResult Update(Guid id, [FromBody] UpdateDifficultyDTO dto)
-        {
-            var existing = difficulties.FirstOrDefault(d => d.Id == id);
-            if (existing == null) return NotFound();
 
-            existing.Name = dto.Name;
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateDifficultyDTO dto)
+        {
+            if (dto == null) return BadRequest();
+
+            var difficulty = new Difficulty
+            {
+                Name = dto.Name
+            };
+
+            var updated = await difficultyRepository.UpdateAsync(id, difficulty);
+
+            if (updated == null) return NotFound();
 
             return NoContent();
         }
+
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(Guid id)
+        public async Task<IActionResult> Delete(Guid id)
         {
-            var existing = difficulties.FirstOrDefault(d => d.Id == id);
-            if (existing == null) return NotFound();
+            var deleted = await difficultyRepository.DeleteAsync(id);
 
-            difficulties.Remove(existing);
+            if (deleted == null) return NotFound();
+
             return NoContent();
         }
+
     }
 }

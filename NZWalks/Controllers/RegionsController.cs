@@ -2,93 +2,77 @@
 using Microsoft.AspNetCore.Mvc;
 using NZWalks.Models.Domain;
 using NZWalks.Models.DTO;
+using NZWalks.Repositories;
 
 namespace NZWalks.Controllers
 {
-    [Authorize] // 🔐 all endpoints in this controller require authentication
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class RegionsController : ControllerBase
+    public class RegionController : ControllerBase
     {
-        private static readonly List<Region> regions = new List<Region>();
+        private readonly IRegionRepository regionRepository;
 
-        [HttpGet]
-        public IActionResult GetAll()
+        public RegionController(IRegionRepository regionRepository)
         {
-            var dtoList = regions.Select(r => new RegionDTO
-            {
-                Id = r.Id,
-                Code = r.Code,
-                Name = r.Name,
-                RegionImageUrl = r.RegionImageUrl
-            }).ToList();
-
-            return Ok(dtoList);
+            this.regionRepository = regionRepository;
         }
 
-        [HttpGet("{id}")]
-        public IActionResult GetById(Guid id)
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
         {
-            var region = regions.FirstOrDefault(r => r.Id == id);
-            if (region == null) return NotFound();
-
-            var dto = new RegionDTO
+            var regions = await regionRepository.GetAllAsync();
+            return Ok(regions.Select(r => new RegionDTO
             {
-                Id = region.Id,
-                Code = region.Code,
-                Name = region.Name,
-                RegionImageUrl = region.RegionImageUrl
-            };
-
-            return Ok(dto);
+                Id = r.Id,
+                Name = r.Name,
+                Code = r.Code,
+                RegionImageUrl = r.RegionImageUrl
+            }));
         }
 
         [HttpPost]
-        public IActionResult Create([FromBody] AddRegionDTO dto)
+        public async Task<IActionResult> Create([FromBody] AddRegionDTO dto)
         {
             if (dto == null) return BadRequest();
 
             var region = new Region
             {
                 Id = Guid.NewGuid(),
-                Code = dto.Code,
                 Name = dto.Name,
+                Code = dto.Code,
                 RegionImageUrl = dto.RegionImageUrl
             };
 
-            regions.Add(region);
+            await regionRepository.CreateAsync(region);
 
-            var responseDto = new RegionDTO
-            {
-                Id = region.Id,
-                Code = region.Code,
-                Name = region.Name,
-                RegionImageUrl = region.RegionImageUrl
-            };
-
-            return CreatedAtAction(nameof(GetById), new { id = region.Id }, responseDto);
+            return CreatedAtAction(nameof(GetAll), new { id = region.Id }, region);
         }
 
         [HttpPut("{id}")]
-        public IActionResult Update(Guid id, [FromBody] UpdateRegionDTO dto)
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateRegionDTO dto)
         {
-            var existing = regions.FirstOrDefault(r => r.Id == id);
-            if (existing == null) return NotFound();
+            var region = new Region
+            {
+                Name = dto.Name,
+                Code = dto.Code,
+                RegionImageUrl = dto.RegionImageUrl
+            };
 
-            existing.Code = dto.Code;
-            existing.Name = dto.Name;
-            existing.RegionImageUrl = dto.RegionImageUrl;
+            var updated = await regionRepository.UpdateAsync(id, region);
+
+            if (updated == null) return NotFound();
 
             return NoContent();
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(Guid id)
+        public async Task<IActionResult> Delete(Guid id)
         {
-            var existing = regions.FirstOrDefault(r => r.Id == id);
-            if (existing == null) return NotFound();
+            var deleted = await regionRepository.DeleteAsync(id);
 
-            regions.Remove(existing);
+            if (deleted == null) return NotFound();
+
             return NoContent();
         }
     }
